@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Wrapper from '../assets/wrappers/RegisterPage';
 import { FormRow, Alert, Logo } from '../components';
 import { useAppContext } from '../context/appContext';
+import { useNavigate } from 'react-router-dom';
 
 const initialState = {
   name: '',
@@ -9,9 +10,11 @@ const initialState = {
   email: '',
   isMember: true,
 };
+
 const Register = () => {
+  const navigate = useNavigate();
   const [values, setValues] = useState(initialState);
-  const { showAlert, displayAlert } = useAppContext();
+  const { user, showAlert, displayAlert, setupUser } = useAppContext();
 
   const handleChange = (e) => {
     setValues({ ...values, [e.target.name]: e.target.value });
@@ -24,12 +27,35 @@ const Register = () => {
       displayAlert();
       return;
     }
-    console.log(e.target);
+
+    const currentUser = { name, email, password };
+    if (isMember) {
+      setupUser({
+        currentUser,
+        endPoint: 'login',
+        alertText: 'login successful. forwarding..',
+      });
+    } else {
+      setupUser({
+        currentUser,
+        endPoint: 'register',
+        alertText: 'user created. forwarding...',
+      });
+    }
   };
+
+  useEffect(() => {
+    if (user) {
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 3000);
+    }
+  }, [user, navigate]);
 
   const toggleMember = () => {
     setValues({ ...values, isMember: !values.isMember });
   };
+
   return (
     <Wrapper className='full-page'>
       <form className='form' onSubmit={onSubmit}>
