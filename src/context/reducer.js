@@ -14,6 +14,15 @@ import {
   CREATE_JOB_BEGIN,
   CREATE_JOB_SUCCESS,
   CREATE_JOB_ERROR,
+  GET_ALL_JOBS_BEGIN,
+  GET_ALL_JOBS_SUCCESS,
+  READ_JOB_RECORD,
+  DELETE_JOB_BEGIN,
+  UPDATE_JOB_BEGIN,
+  UPDATE_JOB_ERROR,
+  UPDATE_JOB_SUCCESS,
+  SHOW_STATS_BEGIN,
+  SHOW_STATS_SUCCESS,
 } from './actions';
 
 import { initialState } from './appContext';
@@ -166,6 +175,92 @@ const reducer = (state, action) => {
     };
   }
 
+  //GET ALL JOBS
+  if (action.type === GET_ALL_JOBS_BEGIN) {
+    return {
+      ...state,
+      isLoading: true,
+      showAlert: false,
+    };
+  }
+
+  if (action.type === GET_ALL_JOBS_SUCCESS) {
+    return {
+      ...state,
+      isLoading: false,
+      showAlert: true,
+      jobs: action.payload.jobs,
+      totalJobs: action.payload.totalJobs,
+      numOfPages: action.payload.numOfPages,
+    };
+  }
+
+  if (action.type === READ_JOB_RECORD) {
+    const job = state.jobs.find((job) => job.id === action.payload.id);
+    const { id, jobCompany, jobPosition, jobLocation, jobStatus, jobType } =
+      job;
+    return {
+      ...state,
+      isEditing: true,
+      editJobId: id,
+      jobCompany,
+      jobPosition,
+      jobLocation,
+      jobStatus,
+      jobType,
+    };
+  }
+
+  if (action.type === DELETE_JOB_BEGIN) {
+    return {
+      ...state,
+      isLoading: true,
+      showAlert: false,
+    };
+  }
+
+  if (action.type === UPDATE_JOB_BEGIN) {
+    return {
+      ...state,
+      isLoading: true,
+      showAlert: false,
+    };
+  }
+  if (action.type === UPDATE_JOB_SUCCESS) {
+    return {
+      ...state,
+      isLoading: false,
+      showAlert: true,
+      alertType: 'success',
+      alertText: 'Job updated...',
+    };
+  }
+  if (action.type === UPDATE_JOB_ERROR) {
+    return {
+      ...state,
+      isLoading: false,
+      showAlert: true,
+      alertType: 'danger',
+      alertText: action.payload.message,
+    };
+  }
+
+  if (action.type === SHOW_STATS_BEGIN) {
+    return {
+      ...state,
+      isLoading: true,
+      showAlert: false,
+    };
+  }
+
+  if (action.type === SHOW_STATS_SUCCESS) {
+    return {
+      ...state,
+      isLoading: false,
+      stats: action.payload.stats,
+      monthlyApplications: action.payload.monthlyApplications,
+    };
+  }
   throw new Error(`no such action : ${action.type}`);
 };
 

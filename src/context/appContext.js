@@ -18,6 +18,17 @@ import {
   CREATE_JOB_BEGIN,
   CREATE_JOB_SUCCESS,
   CREATE_JOB_ERROR,
+  GET_ALL_JOBS_BEGIN,
+  GET_ALL_JOBS_SUCCESS,
+  READ_JOB_RECORD,
+  DELETE_JOB_BEGIN,
+  UPDATE_JOB_BEGIN,
+  UPDATE_JOB_SUCCESS,
+  UPDATE_JOB_ERROR,
+  SHOW_STATS_BEGIN,
+  SHOW_STATS_SUCCESS,
+  GET_CURRENT_USER_BEGIN,
+  GET_CURRENT_USER_SUCCESS,
 } from './actions';
 
 const user = localStorage.getItem('user');
@@ -44,6 +55,11 @@ const initialState = {
   jobType: 'full-time',
   jobStatusOptions: ['interview', 'declined', 'pending'],
   jobStatus: 'pending',
+
+  jobs: [],
+  totalJobs: 0,
+  numOfPages: 1,
+  page: 1,
 };
 
 const AppContext = React.createContext();
@@ -101,6 +117,25 @@ const AppProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('location');
+  };
+
+  const getCurrentUser = async () => {
+    dispatch({ type: GET_CURRENT_USER_BEGIN });
+
+    try {
+      const { data } = await axios.get('/user/getcurrentuser');
+      console.log(data);
+      const { user } = data;
+      dispatch({
+        type: GET_CURRENT_USER_SUCCESS,
+        payload: { user },
+      });
+    } catch (err) {
+      console.log(err.response);
+      logoutUser();
+    }
+
+    clearAlert();
   };
 
   const setupUser = async ({ currentUser, endPoint, alertText }) => {
@@ -199,11 +234,97 @@ const AppProvider = ({ children }) => {
     clearAlert();
   };
 
+  //GET ALL JOBS
+  const getJobs = async () => {
+    dispatch({ type: GET_ALL_JOBS_BEGIN });
+    try {
+      const resp = await authFetch.get('/job/getjobs');
+      console.log(resp);
+      const { jobs, totalJobs, numOfPages } = resp.data;
+      dispatch({
+        type: GET_ALL_JOBS_SUCCESS,
+        payload: { jobs, totalJobs, numOfPages },
+      });
+    } catch (err) {
+      console.log(err);
+      if (err.response.status === 401) return;
+    }
+
+    clearAlert();
+  };
+
+  const readJobRecord = (id) => {
+    console.log(`read job id ${id}`);
+    dispatch({ type: READ_JOB_RECORD, payload: { id } });
+  };
+
+  const updateJobRecord = async () => {
+    dispatch({ type: UPDATE_JOB_BEGIN });
+
+    try {
+      const { jobCompany, jobPosition, jobLocation, jobStatus, jobType } =
+        state;
+      let url = `/job/updatejob/${state.editJobId}`;
+      await authFetch.patch(url, {
+        jobCompany,
+        jobPosition,
+        jobLocation,
+        jobStatus,
+        jobType,
+      });
+
+      dispatch({ type: UPDATE_JOB_SUCCESS });
+      dispatch({ type: CLEAR_JOB_VALUES });
+    } catch (error) {
+      if (error.response.status === 401) return;
+      dispatch({
+        type: UPDATE_JOB_ERROR,
+        payload: { msg: error.response.data.message },
+      });
+    }
+    clearAlert();
+  };
+
+  const deleteJob = async (jobId) => {
+    console.log(`delete job ${jobId}`);
+    dispatch({ type: DELETE_JOB_BEGIN, payload: { jobId } });
+    let url = `/job/deletejob/${jobId}`;
+    try {
+      const resp = await authFetch.delete(url);
+      console.log(resp);
+      getJobs();
+    } catch (err) {
+      console.log(err.response);
+      // logoutUser();
+    }
+  };
+
+  const showStats = async () => {
+    dispatch({ type: SHOW_STATS_BEGIN });
+    let url = '/job/stats';
+
+    try {
+      const resp = await authFetch.get(url);
+      console.log(resp);
+      dispatch({
+        type: SHOW_STATS_SUCCESS,
+        payload: {
+          stats: resp.data.stats,
+          monthlyApplications: resp.data.monthlyApp,
+        },
+      });
+    } catch (err) {
+      console.log(err.response);
+      // logoutUser();
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
         ...state,
         displayAlert,
+        getCurrentUser,
         setupUser,
         toggleSidebar,
         logoutUser,
@@ -211,6 +332,11 @@ const AppProvider = ({ children }) => {
         handleChange,
         clearJobValues,
         creaeJob,
+        getJobs,
+        readJobRecord,
+        updateJobRecord,
+        deleteJob,
+        showStats,
       }}
     >
       {children}

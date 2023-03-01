@@ -17,6 +17,7 @@ const AddJob = () => {
     jobStatus,
     handleChange,
     creaeJob,
+    updateJobRecord,
   } = useAppContext();
 
   const handleSubmit = (e) => {
@@ -27,6 +28,7 @@ const AddJob = () => {
     }
     if (isEditing) {
       //update job
+      updateJobRecord();
     } else {
       creaeJob();
     }
