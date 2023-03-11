@@ -66,14 +66,42 @@ const AppContext = React.createContext();
 
 const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  console.log('APP PROVIDER....');
 
-  //START: axios setup----------------------------------------
+  //START: pre-auth axios setup----------------------------------------
+  const preAuthFetch = axios.create();
+
+  //request interceptor
+  preAuthFetch.interceptors.request.use(
+    (config) => {
+      config.headers['X-TenantID'] = 'jv2';
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+  //response interceptor
+  preAuthFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      console.log(error);
+      return Promise.reject(error);
+    }
+  );
+  //END: pre-auth axios setup----------------------------------------
+
+  //START: auth axios setup----------------------------------------
   const authFetch = axios.create({
     baseURL: '/api/v1',
   });
+
   //request interceptor
   authFetch.interceptors.request.use(
     (config) => {
+      config.headers['X-TenantID'] = 'jv2';
       config.headers['Authorization'] = `Bearer ${state.token}`;
       return config;
     },
@@ -94,7 +122,7 @@ const AppProvider = ({ children }) => {
       return Promise.reject(error);
     }
   );
-  //END: axios setup----------------------------------------
+  //END: auth axios setup----------------------------------------
 
   const displayAlert = () => {
     dispatch({ type: DISPLAY_ALERT });
@@ -123,7 +151,7 @@ const AppProvider = ({ children }) => {
     dispatch({ type: GET_CURRENT_USER_BEGIN });
 
     try {
-      const { data } = await axios.get('/user/getcurrentuser');
+      const { data } = await preAuthFetch.get('/user/getcurrentuser');
       console.log(data);
       const { user } = data;
       dispatch({
@@ -142,7 +170,7 @@ const AppProvider = ({ children }) => {
     dispatch({ type: SETUP_USER_BEGIN });
 
     try {
-      const resp = await axios.post(`/auth/${endPoint}`, currentUser);
+      const resp = await preAuthFetch.post(`/auth/${endPoint}`, currentUser);
       console.log(resp);
       const { user, token, location } = resp.data;
       dispatch({

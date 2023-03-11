@@ -5,9 +5,9 @@ import BarChart from './BarChart';
 import AreaChart from './AreaChart';
 
 const ChartsContainer = () => {
-  const { monthlyApplications } = useAppContext;
+  const { monthlyApplications } = useAppContext();
   const [barChart, setBarChart] = useState(true);
-
+  console.log(monthlyApplications);
   return (
     <Wrapper>
       <h4>Monthly Applications</h4>
